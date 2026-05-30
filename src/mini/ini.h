@@ -349,7 +349,7 @@ namespace mINI
 			else {
 				isBOM = false;
 			}
-			std::string fileContents;
+			std::vector<char> fileContents;
 			fileContents.resize(fileSize);
 			fileReadStream.seekg(isBOM ? 3 : 0, std::ios::beg);
 			fileReadStream.read(fileContents.data(), fileSize);
@@ -738,9 +738,9 @@ namespace mINI
 		std::string filename;
 
 	public:
-		INIFile(std::filesystem::path filename)
-		: filename(std::move(filename))
-		{ }
+        INIFile(std::string const &filename)
+            : filename(filename)
+        { }
 
 		~INIFile() { }
 
