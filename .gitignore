@@ -5,3 +5,7 @@
 /tests/*.ini
 /tests/*.test
 /tests/*.exe
+/.vs
+/.vscode
+/x64/Debug
+/mINI.sln
