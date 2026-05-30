@@ -91,6 +91,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include <sys/stat.h>
 #include <cctype>
 
 namespace mINI
