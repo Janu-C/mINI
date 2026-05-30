@@ -5,6 +5,7 @@
 /tests/*.ini
 /tests/*.test
 /tests/*.exe
+/tests/build
 /.vs
 /.vscode
 /x64/Debug

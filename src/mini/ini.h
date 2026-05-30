@@ -23,7 +23,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  /mINI/ v0.9.15
+//  /mINI/ v0.9.18 for msvc 11.0
 //  An INI file reader and writer for the modern age.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,6 @@
 #include <vector>
 #include <memory>
 #include <fstream>
-#include <sys/stat.h>
 #include <cctype>
 
 namespace mINI
@@ -143,9 +142,9 @@ namespace mINI
 		T_DataIndexMap dataIndexMap;
 		T_DataContainer data;
 
-		inline std::size_t setEmpty(std::string& key)
+		std::size_t setEmpty(std::string& key)
 		{
-			std::size_t index = data.size();
+			const std::size_t index = data.size();
 			dataIndexMap[key] = index;
 			data.emplace_back(key, T());
 			return index;
@@ -160,19 +159,6 @@ namespace mINI
 		{
 		}
 
-		INIMap& operator=(INIMap const& other)
-		{
-			std::size_t data_size = other.data.size();
-			for (std::size_t i = 0; i < data_size; ++i)
-			{
-				auto const& key = other.data[i].first;
-				auto const& obj = other.data[i].second;
-				data.emplace_back(key, obj);
-			}
-			dataIndexMap = T_DataIndexMap(other.dataIndexMap);
-			return *this;
-		}
-
 		T& operator[](std::string key)
 		{
 			INIStringUtil::trim(key);
@@ -180,8 +166,8 @@ namespace mINI
 			INIStringUtil::toLower(key);
 #endif
 			auto it = dataIndexMap.find(key);
-			bool hasIt = (it != dataIndexMap.end());
-			std::size_t index = (hasIt) ? it->second : setEmpty(key);
+			const bool hasIt = (it != dataIndexMap.end());
+			const std::size_t index = (hasIt) ? it->second : setEmpty(key);
 			return data[index].second;
 		}
 		T get(std::string key) const
@@ -292,7 +278,7 @@ namespace mINI
 			{
 				return PDataType::PDATA_NONE;
 			}
-			char firstCharacter = line[0];
+			const char firstCharacter = line[0];
 			if (firstCharacter == ';')
 			{
 				return PDataType::PDATA_COMMENT;
@@ -366,7 +352,7 @@ namespace mINI
 			std::string fileContents;
 			fileContents.resize(fileSize);
 			fileReadStream.seekg(isBOM ? 3 : 0, std::ios::beg);
-			fileReadStream.read(&fileContents[0], fileSize);
+			fileReadStream.read(fileContents.data(), fileSize);
 			fileReadStream.close();
 			T_LineData output;
 			if (fileSize == 0)
@@ -377,7 +363,7 @@ namespace mINI
 			buffer.reserve(50);
 			for (std::size_t i = 0; i < fileSize; ++i)
 			{
-				char& c = fileContents[i];
+				const char& c = fileContents[i];
 				if (c == '\n')
 				{
 					output.emplace_back(buffer);
@@ -411,7 +397,7 @@ namespace mINI
 			{
 				return false;
 			}
-			T_LineData fileLines = readFile();
+			const T_LineData fileLines = readFile();
 			std::string section;
 			bool inSection = false;
 			INIParser::T_ParseValues parseData;
@@ -467,7 +453,7 @@ namespace mINI
 			{
 				return false;
 			}
-			if (!data.size())
+			if (data.size() == 0U)
 			{
 				return true;
 			}
@@ -480,7 +466,7 @@ namespace mINI
 					<< "["
 					<< section
 					<< "]";
-				if (collection.size())
+				if (collection.size() != 0U)
 				{
 					fileWriteStream << INIStringUtil::endl;
 					auto it2 = collection.begin();
@@ -523,7 +509,7 @@ namespace mINI
 
 		std::string filename;
 
-		T_LineData getLazyOutput(T_LineDataPtr const& lineData, INIStructure& data, INIStructure& original)
+		T_LineData getLazyOutput(T_LineDataPtr const& lineData, INIStructure& data, INIStructure& original) const
 		{
 			T_LineData output;
 			INIParser::T_ParseValues parseData;
@@ -659,7 +645,7 @@ namespace mINI
 				{
 					continue;
 				}
-				if (prettyPrint && output.size() > 0 && !output.back().empty())
+				if (prettyPrint && !output.empty() && !output.back().empty())
 				{
 					output.emplace_back();
 				}
@@ -704,7 +690,8 @@ namespace mINI
 			bool fileIsBOM = false;
 			{
 				INIReader reader(filename, true);
-				if ((readSuccess = reader >> originalData))
+				readSuccess = reader >> originalData;
+				if (readSuccess)
 				{
 					lineData = reader.getLines();
 					fileIsBOM = reader.isBOM;
@@ -726,7 +713,7 @@ namespace mINI
 					};
 					fileWriteStream.write(utf8_BOM, 3);
 				}
-				if (output.size())
+				if (!output.empty())
 				{
 					auto line = output.begin();
 					for (;;)
@@ -751,15 +738,15 @@ namespace mINI
 		std::string filename;
 
 	public:
-		INIFile(std::string const& filename)
-		: filename(filename)
+		INIFile(std::filesystem::path filename)
+		: filename(std::move(filename))
 		{ }
 
 		~INIFile() { }
 
 		bool read(INIStructure& data) const
 		{
-			if (data.size())
+			if (data.size() != 0U)
 			{
 				data.clear();
 			}
